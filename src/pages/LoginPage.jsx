@@ -1,63 +1,82 @@
-import React, { useState } from 'react';
+import axios from 'axios';
+import { useFormik } from 'formik';
+import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
-const LoginPage = () => {
-   const [email, setEmail] = useState('');
-   const [password, setPassword] = useState('');
+import { TOKEN } from '../constants';
+import loginSchema from './../schemas/loginSchema';
 
-   const handleSubmit = event => {
-      event.preventDefault();
-      // Add your login logic here
-      console.log('Email:', email);
-      console.log('Password:', password);
-   };
+const LoginPage = ({ setIsLogin }) => {
+   const navigate = useNavigate();
+   const formik = useFormik({
+      initialValues: {
+         email: '',
+         password: '',
+      },
+      validationSchema: loginSchema,
+      onSubmit: async values => {
+         try {
+            let res = await axios.post('https://reqres.in/api/login', values);
+            localStorage.setItem(TOKEN, res.data.token);
+            setIsLogin(true);
+            navigate('/');
+         } catch (err) {
+            toast.error(err.response.data.error);
+         }
+      },
+   });
+   //  "email": "eve.holt@reqres.in",
+   //  "password": "cityslicka"
    return (
-      <div>
-         <div
-            className='container login-container w-100'
-            style={{ marginTop: '100px' }}
+      <div className='w-100 '>
+         <form
+            className='container'
+            onSubmit={formik.handleSubmit}
+            autoComplete='off'
          >
-            <div
-               className='login-form'
-               style={{
-                  maxWidth: '400px',
-                  margin: 'auto',
-                  padding: '20px',
-                  border: '1px solid #ddd',
-                  borderRadius: '5px',
-               }}
-            >
-               <h2>Login</h2>
-               <form onSubmit={handleSubmit}>
-                  <div className='form-group'>
-                     <label htmlFor='email'>Email address</label>
-                     <input
-                        type='email'
-                        className='form-control'
-                        id='email'
-                        placeholder='Enter email'
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                     />
-                  </div>
-                  <div className='form-group'>
-                     <label htmlFor='password'>Password</label>
-                     <input
-                        type='password'
-                        className='form-control'
-                        id='password'
-                        placeholder='Password'
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                     />
-                  </div>
-                  <button type='submit' className='btn btn-primary btn-block'>
-                     Login
-                  </button>
-               </form>
+            <div className='form-group mb-3'>
+               <label htmlFor='email'>Email</label>
+               <input
+                  type='text'
+                  id='email'
+                  className='form-control'
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.email}
+               />
+               {formik.touched.email && formik.errors.email ? (
+                  <p className='text-danger'>{formik.errors.email}</p>
+               ) : null}
             </div>
-         </div>
+
+            <div className='form-group mb-3'>
+               <label htmlFor='password'>Password</label>
+               <input
+                  type='password'
+                  id='password'
+                  className='form-control'
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  value={formik.values.password}
+               />
+               {formik.touched.password && formik.errors.password ? (
+                  <p className='text-danger'>{formik.errors.password}</p>
+               ) : null}
+            </div>
+
+            <div className='form-group mb-3'>
+               <button type='submit' className='btn btn-primary w-100'>
+                  Login
+               </button>
+            </div>
+         </form>
       </div>
    );
+};
+
+LoginPage.propTypes = {
+   setIsLogin: PropTypes.func,
 };
 
 export default LoginPage;
